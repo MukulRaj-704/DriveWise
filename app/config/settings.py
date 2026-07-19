@@ -7,6 +7,10 @@ the rest of the codebase should read `os.environ` directly — always
 go through `get_settings()` so there is a single source of truth and
 so tests can override settings easily.
 """
+from dotenv import load_dotenv
+from pathlib import Path
+
+load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=True)
 from functools import lru_cache
 from typing import Literal
 
@@ -98,9 +102,9 @@ class Settings(BaseSettings):
     # --- Logging ---
     LOG_LEVEL: str = "INFO"
     LOG_JSON: bool = True
-
+import os
+from pathlib import Path
 
 @lru_cache
 def get_settings() -> Settings:
-    """Return a cached Settings instance (env is read once per process)."""
     return Settings()

@@ -29,6 +29,7 @@ class ChatService:
         self.chunk_repo = ChunkRepository(db)
         self.retriever = retriever or get_retriever()
         self.llm = llm or get_llm_provider_dependency()
+        print("LLM INSTANCE:", type(self.llm)) 
         self.pipeline = RagPipeline(self.retriever, self.llm)
 
     async def ask(self, user_id: str, request: ChatRequest) -> ChatResponse:

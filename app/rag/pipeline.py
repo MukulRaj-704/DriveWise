@@ -30,6 +30,24 @@ class RagPipeline:
         self.retriever = retriever
         self.llm = llm
 
+    # async def answer(
+    #     self,
+    #     question: str,
+    #     chunk_texts: dict[str, str],
+    #     brochure_names: dict[str, str],
+    #     filters: dict | None = None,
+    #     history: str | None = None,
+    # ) -> RagResult:
+    #     chunks = self.retriever.retrieve(question, chunk_texts, filters=filters)
+
+    #     if not chunks:
+    #         return RagResult(answer=NOT_FOUND_MESSAGE, sources=[])
+
+    #     prompt = build_user_prompt(question, chunks, history=history)
+    #     raw_answer = await self.llm.generate(prompt, system_prompt=SYSTEM_PROMPT)
+
+    #     answer, sources = format_response(raw_answer, chunks, brochure_names)
+    #     return RagResult(answer=answer, sources=sources)
     async def answer(
         self,
         question: str,
@@ -38,13 +56,28 @@ class RagPipeline:
         filters: dict | None = None,
         history: str | None = None,
     ) -> RagResult:
+
+        print("PIPELINE STARTED")
+        print("LLM TYPE:", type(self.llm))
+
         chunks = self.retriever.retrieve(question, chunk_texts, filters=filters)
 
         if not chunks:
+            print("NO CHUNKS FOUND")
             return RagResult(answer=NOT_FOUND_MESSAGE, sources=[])
 
+        print("CHUNKS FOUND:", len(chunks))
+
         prompt = build_user_prompt(question, chunks, history=history)
-        raw_answer = await self.llm.generate(prompt, system_prompt=SYSTEM_PROMPT)
+
+        print("CALLING GENERATE")
+
+        raw_answer = await self.llm.generate(
+            prompt,
+            system_prompt=SYSTEM_PROMPT,
+        )
+
+        print("GENERATE COMPLETED")
 
         answer, sources = format_response(raw_answer, chunks, brochure_names)
         return RagResult(answer=answer, sources=sources)
