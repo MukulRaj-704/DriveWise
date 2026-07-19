@@ -2,7 +2,7 @@
 
 A production-grade, **hallucination-free** RAG (Retrieval-Augmented Generation) assistant for car brochures.
 
-Upload one or more car brochure PDFs, ask natural-language questions, and get answers that are grounded **strictly** in the uploaded documents — with page-level source attribution. If the brochure doesn't contain the answer, DriveWise says so instead of guessing.
+Upload one or more car brochure PDFs, ask natural-language questions, and get answers that are grounded **strictly** in the uploaded documents with page-level source attribution. If the brochure doesn't contain the answer, DriveWise says so instead of guessing.
 
 > "I couldn't find this information in the uploaded brochure."
 
@@ -14,7 +14,7 @@ Upload one or more car brochure PDFs, ask natural-language questions, and get an
 - **LLM fallback chain.** Configure a primary provider and one or more fallbacks (e.g. Groq → Gemini). If the primary is rate-limited or down, DriveWise automatically retries the next provider in the chain — no manual intervention, no code changes.
 - **Fully local for development.** Ollama + Sentence Transformers + FAISS means you can develop the entire stack with no API keys and no data leaving your machine.
 - **Grounded, cited answers.** The prompt contract forces the LLM to answer only from retrieved brochure excerpts and to cite page numbers; the response formatter attaches structured source cards.
-- **Clean Architecture, no Docker required.** API → Service → Repository → ORM, with providers injected via interfaces. Runs directly with Python + Node — nothing to containerize, no Docker Desktop disk usage.
+- **Clean Architecture.** API → Service → Repository → ORM, with providers injected via interfaces. Runs directly with Python + Node — nothing to containerize, no Docker Desktop disk usage.
 
 ## Recommended provider setup
 
@@ -49,17 +49,14 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full component diagra
 
 | Layer | Choice | Swappable via |
 |---|---|---|
-| Frontend | React + TypeScript, TailwindCSS, React Query, Axios | — |
 | Backend | FastAPI, Python 3.12, async everywhere | — |
 | Database | PostgreSQL + SQLAlchemy 2.0 (async) | `DATABASE_URL` |
-| Auth | JWT (access + refresh) | — |
 | PDF Parsing | PyMuPDF (default), pdfplumber | `PDF_PARSER` |
 | Embeddings | Sentence Transformers `BAAI/bge-small-en-v1.5` (default), OpenAI | `EMBEDDING_PROVIDER` |
 | Vector Store | FAISS (default), Chroma | `VECTOR_DB` |
 | Reranker | `BAAI/bge-reranker-base` cross-encoder | `RERANKER` |
 | LLM | Ollama, OpenAI, Gemini, Groq — with automatic fallback chain | `LLM_PROVIDER` + `LLM_FALLBACK_PROVIDERS` |
 
-No LangChain, no Docker. The RAG pipeline is native Python (~150 lines across retriever/prompt_builder/pipeline), which keeps it easy to read, test, and extend.
 
 ## Quick start (local, no Docker)
 
@@ -116,10 +113,6 @@ Restart the backend. `get_llm_provider()` (`app/llm/factory.py`) builds a `Fallb
 
 Same environment-only-switch pattern applies to `EMBEDDING_PROVIDER`, `VECTOR_DB`, `PDF_PARSER`, and `RERANKER`. See [`.env.example`](.env.example) for every knob.
 
-## Deploying without Docker
-
-See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for a full walkthrough of deploying to an always-free Oracle Cloud VM (or any plain Linux VM) using `systemd` + `nginx` — no containers involved.
-
 ## API surface
 
 | Method | Path | Purpose |
@@ -135,14 +128,6 @@ See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for a full walkthrough of deployi
 | DELETE | `/api/v1/chat/{id}` | Delete a chat session |
 
 Full interactive docs at `/docs` (Swagger) and `/redoc` once the backend is running.
-
-## Testing
-
-```bash
-pytest tests/unit tests/integration tests/api -q
-```
-
-26 tests covering chunking, prompt construction, response formatting/anti-hallucination behavior, JWT auth, the FAISS vector store (add/search/filter/delete/persistence), the retrieval pipeline, the LLM fallback chain (primary success, fallback on failure, all-providers-fail, mid-stream failure), and the auth API end-to-end against an in-memory SQLite DB.
 
 ## Project structure
 
